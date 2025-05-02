@@ -1,50 +1,38 @@
-import { Router } from 'express';
-import jwt from 'jsonwebtoken';
-import db from '../config/db.js';
-import User from '../models/User.js';
-import Violation from '../models/Violation.js'; // Додаємо імпорт моделі
+import express from 'express';
 import { createViolation } from '../controllers/violationController.js';
+import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
-const router = Router();
+const router = express.Router();
 
-const authCheck = async (req, res, next) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "Не авторизовано" });
+// Конфиг Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(db, decoded.userId); // Використовуємо findById
-    
-    if (!user) return res.status(401).json({ error: "Не авторизовано" });
-    
-    req.userId = user.id;
-    next();
-  } catch (error) {
-    res.status(401).json({ error: "Не авторизовано" });
-  }
-};
-
-// Створення правопорушення
-router.post('/', authCheck, createViolation);
-
-// Отримання правопорушень з фільтрами
-router.get('/', authCheck, async (req, res) => {
-  try {
-    const { date, lat, lng, radius } = req.query;
-    
-    const violations = await Violation.findAll(db, {
-      userId: req.userId, 
-      date: date,
-      latitude: lat,
-      longitude: lng,
-      radius: radius
-    });
-
-    res.json(violations);
-    
-  } catch (error) {
-    res.status(500).json({ error: "Помилка отримання даних" });
+// Настройка Multer с Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'violations',
+    format: async () => 'jpg',
+    allowed_formats: ['jpg', 'jpeg', 'png']
   }
 });
+const upload = multer({ storage });
+
+// Обертка для передачи пути картинки в body (если есть)
+const prepareImageUrl = (req, res, next) => {
+  if (req.file && req.file.path) {
+    req.body.imageUrl = req.file.path;
+  }
+  next();
+};
+
+// Применяем middleware
+router.post('/', upload.single('image'), prepareImageUrl, createViolation);
 
 export default router;
