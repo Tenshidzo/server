@@ -33,7 +33,7 @@ router.get('/', authCheck, async (req, res) => {
     const { date, lat, lng, radius } = req.query;
     
     const violations = await Violation.findAll(db, {
-      userId: req.userId, // Тільки для поточного юзера
+      userId: req.userId, 
       date: date,
       latitude: lat,
       longitude: lng,

@@ -4,8 +4,7 @@ import Violation from '../models/Violation.js';
 export const createViolation = async (req, res) => {
   try {
     console.log("Данные запроса:", req.body);
-    console.log("userId:", req.userId);
-    // Проверка обязательных полей
+    console.log("userId:", req.userId)
     const { description, imageUrl, latitude, longitude } = req.body;
     
     if (!description || !latitude || !longitude) {

@@ -30,7 +30,7 @@ export const login = async (req, res) => {
     console.log('Спроба входу для email:', email);
 
     // 1. Шукаємо користувача
-    const user = await User.findByEmail(db, email); // Виправлено тут
+    const user = await User.findByEmail(db, email); 
     
     if (!user) {
       console.log('Користувача не знайдено');
