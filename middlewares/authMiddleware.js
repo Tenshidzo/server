@@ -1,25 +1,23 @@
 import jwt from 'jsonwebtoken';
 
 const authMiddleware = (req, res, next) => {
-  if (req.method !== 'GET') {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  console.log('authMiddleware checking headers:', req.headers.authorization);
+
+  if (!req.headers.authorization?.startsWith('Bearer ')) {
+    console.log('No token found');
     return res.status(401).json({ error: 'Немає токена' });
   }
 
-  const token = authHeader.split(' ')[1];
-
+  const token = req.headers.authorization.split(' ')[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.userId = decoded.userId;
-    next();
+    console.log('authMiddleware passed, userId =', req.userId);
+    return next();
   } catch (err) {
-    console.error('JWT verify error:', err.message);
-    res.status(401).json({ error: 'Недійсний токен' });
+    console.log('authMiddleware JWT error:', err.message);
+    return res.status(401).json({ error: 'Недійсний токен' });
   }
-}
-  next();
 };
 
 export default authMiddleware;

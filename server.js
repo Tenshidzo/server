@@ -27,7 +27,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 
 // Захищені маршрути 
-app.use('/api/violations', authMiddleware, violationRoutes);
+app.use('/api/violations', violationRoutes);
 
 app.listen(5000, '0.0.0.0', () => {
   console.log('Server is running on port 5000');

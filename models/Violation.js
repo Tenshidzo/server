@@ -44,4 +44,11 @@ export default class Violation {
 
     return db.all(query, params);
   }
+  static async deleteById(db, { id, userId }) {
+  return db.run(
+    'DELETE FROM violations WHERE id = ? AND userId = ?',
+    [id, userId]
+  );
+}
+
 }

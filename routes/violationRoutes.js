@@ -1,8 +1,9 @@
 import express from 'express';
-import { createViolation, getViolations } from '../controllers/violationController.js';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import authMiddleware from '../middlewares/authMiddleware.js';
+import { deleteViolation, getViolations, createViolation, getMyViolations} from '../controllers/violationController.js';
 
 const router = express.Router();
 cloudinary.config({
@@ -28,8 +29,16 @@ const prepareImageUrl = (req, res, next) => {
   next();
 };
 
-// Применяем middleware
-router.post('/', upload.single('image'), prepareImageUrl, createViolation);
 router.get('/', getViolations);
 
+router.get('/me', authMiddleware, getMyViolations);
+router.post(
+  '/', 
+  authMiddleware, 
+  upload.single('image'), 
+  prepareImageUrl, 
+  createViolation
+);
+
+router.delete('/:id', authMiddleware, deleteViolation);
 export default router;

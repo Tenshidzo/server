@@ -34,21 +34,15 @@ await db.exec(`
   );
 `);
 
-// Вывод данных при запуске
 console.log('\x1b[36m', '=== ДАННЫЕ ИЗ БАЗЫ ДАННЫХ ===');
 
 try {
-  // Получаем пользователей
   const users = await db.all('SELECT * FROM users');
   console.log('\x1b[33m', 'Пользователи:');
   console.table(users);
-
-  // Получаем нарушения
   const violations = await db.all('SELECT * FROM violations');
   console.log('\x1b[33m', 'Правопорушення:');
   console.table(violations);
-
-  // Статистика
   console.log('\x1b[32m', `Всего пользователей: ${users.length}`);
   console.log('\x1b[32m', `Всего нарушений: ${violations.length}`);
 
