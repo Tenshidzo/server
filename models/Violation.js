@@ -8,21 +8,24 @@ export default class Violation {
     );
     return result.lastID;
   }
-
   static async findById(db, id) {
     return db.get('SELECT * FROM violations WHERE id = ?', id);
+  }
+  static async findByDate(db, { month, year }) {
+    return db.all(
+      `SELECT * FROM violations 
+       WHERE CAST(strftime('%m', date) AS INTEGER) = ?
+       AND CAST(strftime('%Y', date) AS INTEGER) = ?`,
+      [month, year]
+    );
   }
   static async findAll(db, filters) {
     let query = 'SELECT * FROM violations WHERE userId = ?';
     const params = [filters.userId];
-
-    // Фільтр по даті
     if (filters.date) {
       query += ' AND DATE(date) = ?';
       params.push(filters.date);
     }
-
-    // Фільтр по геолокації
     if (filters.latitude && filters.longitude && filters.radius) {
       query += `
         AND (6371 * ACOS(

@@ -29,7 +29,6 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
     console.log('Спроба входу для email:', email);
 
-    // 1. Шукаємо користувача
     const user = await User.findByEmail(db, email); 
     
     if (!user) {
@@ -37,17 +36,13 @@ export const login = async (req, res) => {
       return res.status(401).json({ error: "Невірні дані" });
     }
 
-    // 2. Порівнюємо паролі
     console.log('Збережений хеш:', user.password.substring(0, 15) + '...');
     const isMatch = await bcrypt.compare(password, user.password);
     
-    // 3. Перевірка результату
     if (!isMatch) {
       console.log('Паролі не збігаються');
       return res.status(401).json({ error: "Невірні дані" });
     }
-
-    // 4. Генерація токена
     const token = jwt.sign(
       { userId: user.id },
       process.env.JWT_SECRET,

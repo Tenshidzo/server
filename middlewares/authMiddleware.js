@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 const authMiddleware = (req, res, next) => {
+  if (req.method !== 'GET') {
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -17,6 +18,8 @@ const authMiddleware = (req, res, next) => {
     console.error('JWT verify error:', err.message);
     res.status(401).json({ error: 'Недійсний токен' });
   }
+}
+  next();
 };
 
 export default authMiddleware;

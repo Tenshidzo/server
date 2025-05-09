@@ -31,16 +31,23 @@ export const createViolation = async (req, res) => {
   }
 };
 
-export const getViolationImage = async (req, res) => {
+export const getViolations = async (req, res) => {
   try {
-    const violation = await Violation.findById(db, req.params.id);
+    const { month, year } = req.query;
     
-    if (!violation?.image) {
-      return res.status(404).json({ error: "Зображення не знайдено" });
+    // Валидация параметров
+    if (!month || !year) {
+      return res.status(400).json({ error: "Требуются параметры month и year" });
     }
-    res.set('Content-Type', 'image/jpeg');
-    res.send(violation.image);
+
+    const violations = await Violation.findByDate(db, { 
+      month: parseInt(month),
+      year: parseInt(year)
+    });
+
+    res.json(violations);
   } catch (error) {
-    res.status(500).json({ error: "Помилка отримання" });
+    console.error('Ошибка:', error);
+    res.status(500).json({ error: "Ошибка сервера" });
   }
 };
