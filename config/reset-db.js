@@ -8,21 +8,16 @@ async function reset() {
   const __dirname = path.dirname(__filename);
   const dbPath = path.join(__dirname, '../law-citizen.db');
 
-  // Открываем базу, создаём её если нет
   const db = await open({
     filename: dbPath,
     driver: sqlite3.Database
   });
 
   console.log('⚠️ Сбрасываем БД:', dbPath);
-
-  // Удаляем старые таблицы
   await db.exec(`
     DROP TABLE IF EXISTS violations;
     DROP TABLE IF EXISTS users;
   `);
-
-  // Создаём заново
   await db.exec(`
     CREATE TABLE users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
