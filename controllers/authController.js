@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import db from '../config/db.js';
 import User from '../models/User.js';
 
+
 export const register = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
@@ -56,4 +57,4 @@ export const login = async (req, res) => {
     console.error('Помилка входу:', error);
     res.status(500).json({ error: "Помилка входу" });
   }
-};;
+};

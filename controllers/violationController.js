@@ -1,40 +1,52 @@
 import db from '../config/db.js';
 import Violation from '../models/Violation.js';
-
 export const createViolation = async (req, res) => {
   try {
-    const { description, latitude, longitude, imageUrl } = req.body;
-    const userId = req.userId;               
+    const { description, latitude, longitude, date, imageUrl } = req.body;
+    const userId = req.userId;
+    const requiredFields = ['description', 'latitude', 'longitude', 'imageUrl'];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
 
-    if (!description || !latitude || !longitude || !imageUrl) {
-      return res.status(400).json({ error: 'Не всі поля заповнені' });
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        error: `Отсутствуют обязательные поля: ${missingFields.join(', ')}`
+      });
     }
 
-    const date = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    let dbDate;
+    try {
+      dbDate = date ? new Date(date).toISOString() : new Date().toISOString();
+    } catch (e) {
+      console.warn('Ошибка парсинга даты, используется текущая дата');
+      dbDate = new Date().toISOString();
+    }
 
     await db.run(
-      `INSERT INTO violations
-         (description, imageUrl, date, userId, latitude, longitude, isSynced)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [description, imageUrl, date, userId, latitude, longitude, 0]
+      `INSERT INTO violations 
+       (description, imageUrl, userId, latitude, longitude, date)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [description, imageUrl, userId, latitude, longitude, dbDate]
     );
 
-    console.log('Нарушение добавлено для userId:', userId);
+    console.log('Нарушение добавлено с датой:', dbDate);
     return res.status(201).json({ success: true });
+
   } catch (err) {
-    console.error('Ошибка при создании:', err.message);
-    if (!res.headersSent) {
-      res.status(500).json({ error: 'Ошибка сервера' });
-    }
+    console.error('Ошибка при создании:', err);
+    res.status(500).json({
+      error: 'Ошибка сервера',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
+
 
 
 export const getViolations = async (req, res) => {
   try {
     console.log('getViolations called, query:', req.query);
     const { month, year, date } = req.query;
-
+    
     if (date) {
       const violations = await Violation.findAll(db, {
         userId: req.userId || null,
@@ -65,16 +77,57 @@ export const getViolations = async (req, res) => {
 };
 export const getMyViolations = async (req, res) => {
   try {
-    console.log('getMyViolations called');
     const userId = req.userId;
-    console.log('getMyViolations userId:', userId);
+    const { date, lat, lng, radius } = req.query;
 
-    const all = await Violation.findAll(db, { userId });
-    console.log('getMyViolations count:', all.length);
+    let sql = `
+      SELECT 
+        id, 
+        description, 
+        imageUrl as image, 
+        date, 
+        userId, 
+        latitude, 
+        longitude 
+      FROM violations 
+      WHERE userId = ?
+    `;
+    const params = [userId];
+
+    if (date) {
+      const start = new Date(date);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(date);
+      end.setHours(23, 59, 59, 999);
+      sql += ` AND date BETWEEN ? AND ?`;
+      params.push(start.toISOString(), end.toISOString());
+    }
+    if (lat && lng && radius) {
+      const r = parseFloat(radius);
+      const latFloat = parseFloat(lat);
+      const lngFloat = parseFloat(lng);
+
+      const latDelta = r / 111;
+      const lngDelta = r / (111 * Math.cos(latFloat * (Math.PI / 180)));
+
+      const minLat = latFloat - latDelta;
+      const maxLat = latFloat + latDelta;
+      const minLng = lngFloat - lngDelta;
+      const maxLng = lngFloat + lngDelta;
+
+      sql += ` AND latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?`;
+      params.push(minLat, maxLat, minLng, maxLng);
+    }
+
+    sql += ` ORDER BY date DESC`;
+
+    const all = await db.all(sql, params);
+
+    console.log(`📦 Найдено нарушений: ${all.length}`);
     return res.json(all);
   } catch (err) {
-    console.error('Ошибка getMyViolations:', err.message);
-    res.status(500).json({ error: 'Не удалось получить ваши нарушения' });
+    console.error('❌ Ошибка getMyViolations:', err.message);
+    return res.status(500).json({ error: 'Не удалось получить ваши нарушения' });
   }
 };
 
@@ -91,5 +144,27 @@ export const deleteViolation = async (req, res) => {
   } catch (err) {
     console.error('Ошибка deleteViolation:', err.message);
     res.status(500).json({ error: 'Не удалось удалить' });
+  }
+};
+export const getPublicViolations = async (req, res) => {
+  try {
+    const all = await db.all(`
+      SELECT 
+        id, 
+        description, 
+        imageUrl as image, 
+        date, 
+        userId, 
+        latitude, 
+        longitude 
+      FROM violations
+      ORDER BY date DESC
+    `);
+
+    console.log('📍 Публичные нарушения, количество:', all.length);
+    return res.json(all);
+  } catch (err) {
+    console.error('❌ Ошибка получения публичных нарушений:', err.message);
+    res.status(500).json({ error: 'Не удалось получить публичные нарушения' });
   }
 };

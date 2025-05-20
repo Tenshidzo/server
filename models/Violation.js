@@ -45,10 +45,10 @@ export default class Violation {
     return db.all(query, params);
   }
   static async deleteById(db, { id, userId }) {
-  return db.run(
-    'DELETE FROM violations WHERE id = ? AND userId = ?',
+  const res = await db.run(
+    `DELETE FROM violations WHERE id = ? AND userId = ?`,
     [id, userId]
   );
+  return res.changes > 0;
 }
-
 }

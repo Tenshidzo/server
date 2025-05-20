@@ -10,8 +10,6 @@ const db = await open({
   filename: path.join(__dirname, '../law-citizen.db'),
   driver: sqlite3.Database
 });
-
-// Создание таблиц
 await db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

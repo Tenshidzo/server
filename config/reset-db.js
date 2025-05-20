@@ -13,7 +13,7 @@ async function reset() {
     driver: sqlite3.Database
   });
 
-  console.log('⚠️ Сбрасываем БД:', dbPath);
+  console.log('Сбрасываем БД:', dbPath);
   await db.exec(`
     DROP TABLE IF EXISTS violations;
     DROP TABLE IF EXISTS users;

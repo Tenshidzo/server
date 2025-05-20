@@ -3,7 +3,7 @@ import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import authMiddleware from '../middlewares/authMiddleware.js';
-import { deleteViolation, getViolations, createViolation, getMyViolations} from '../controllers/violationController.js';
+import { deleteViolation, getViolations, createViolation, getMyViolations, getPublicViolations} from '../controllers/violationController.js';
 
 const router = express.Router();
 cloudinary.config({
@@ -30,7 +30,7 @@ const prepareImageUrl = (req, res, next) => {
 };
 
 router.get('/', getViolations);
-
+router.get('/all', getPublicViolations);
 router.get('/me', authMiddleware, getMyViolations);
 router.post(
   '/', 
@@ -39,6 +39,8 @@ router.post(
   prepareImageUrl, 
   createViolation
 );
-
+router.get('/healthcheck', (req, res) => {
+  res.status(200).json({ status: 'OK' });
+});
 router.delete('/:id', authMiddleware, deleteViolation);
 export default router;
