@@ -15,7 +15,4 @@ export default class User {
   static async findById(db, id) {
     return db.get('SELECT * FROM users WHERE id = ?', id);
   }
-static async findByEmail(db, email) {
-  return db.get('SELECT * FROM users WHERE email = ?', email);
-}
-}
+} 

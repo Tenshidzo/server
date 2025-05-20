@@ -22,7 +22,7 @@ await db.exec(`
   CREATE TABLE IF NOT EXISTS violations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     description TEXT NOT NULL,
-    image BLOB,
+    image TEXT,
     date DATETIME DEFAULT CURRENT_TIMESTAMP,
     userId INTEGER,
     latitude REAL,
