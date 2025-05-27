@@ -7,7 +7,17 @@ import User from '../models/User.js';
 export const register = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
-    
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ error: 'Усі поля обовʼязкові для заповнення' });
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Неправильний формат email' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Пароль має містити щонайменше 6 символів' });
+    }
+
     const existingUser = await User.findByEmail(db, email);
     if (existingUser) return res.status(409).json({ error: "Користувач існує" });
 

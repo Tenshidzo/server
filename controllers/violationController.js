@@ -4,15 +4,20 @@ export const createViolation = async (req, res) => {
   try {
     const { description, latitude, longitude, date, imageUrl } = req.body;
     const userId = req.userId;
-    const requiredFields = ['description', 'latitude', 'longitude', 'imageUrl'];
-    const missingFields = requiredFields.filter(field => !req.body[field]);
-
-    if (missingFields.length > 0) {
-      return res.status(400).json({
-        error: `Отсутствуют обязательные поля: ${missingFields.join(', ')}`
-      });
+    if (!description || !latitude || !longitude || !imageUrl) {
+      return res.status(400).json({ error: 'Всі поля (description, latitude, longitude, imageUrl) є обовʼязковими' });
     }
-
+    if (description.length < 5) {
+      return res.status(400).json({ error: 'Опис має містити щонайменше 5 символів' });
+    }
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+    if (isNaN(lat) || lat < -90 || lat > 90 || isNaN(lng) || lng < -180 || lng > 180) {
+      return res.status(400).json({ error: 'Некоректні координати (latitude/longitude)' });
+    }
+    if (typeof imageUrl !== 'string' || !imageUrl.startsWith('http')) {
+      return res.status(400).json({ error: 'Некоректне посилання на зображення' });
+    }
     let dbDate;
     try {
       dbDate = date ? new Date(date).toISOString() : new Date().toISOString();
